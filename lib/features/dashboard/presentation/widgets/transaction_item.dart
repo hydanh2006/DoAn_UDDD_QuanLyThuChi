@@ -1,18 +1,31 @@
+
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_colors.dart';
-import '../../data/models/transaction_model.dart';
+
 import 'package:intl/intl.dart';
-
 class TransactionItem extends StatelessWidget {
-  final TransactionModel transaction;
+  final String title;
+  final String time;
+  final double amount;
+  final bool isIncome;
+  final IconData icon;
+  final Color iconBackgroundColor;
 
-  const TransactionItem({Key? key, required this.transaction}) : super(key: key);
+  const TransactionItem({
+    Key? key,
+    required this.title,
+    required this.time,
+    required this.amount,
+    required this.isIncome,
+    required this.icon,
+    required this.iconBackgroundColor,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Format số tiền (ví dụ: -50,000)
+    // Format số tiền (ví dụ: 50.000 đ)
     final formatCurrency = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
-    final isIncome = transaction.amount > 0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -24,48 +37,59 @@ class TransactionItem extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Icon
+          // Khối chứa Icon
           Container(
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: transaction.iconBackgroundColor,
+              color: iconBackgroundColor,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
-              transaction.icon,
-              color: isIncome ? AppColors.income : (transaction.amount == -300000 ? AppColors.primary : AppColors.expense), // Logic màu tạm thời theo mock data
+              icon,
+              // Tự động đổi màu icon: Xanh nếu là thu nhập, Đỏ nếu là chi phí
+              color: isIncome ? AppColors.income : AppColors.expense,
               size: 28,
             ),
           ),
           const SizedBox(width: 16),
-          // Tiêu đề & Thời gian
+
+          // Khối Tiêu đề & Thời gian
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  transaction.title,
+                  title,
                   style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  transaction.time,
+                  time,
                   style: const TextStyle(
-                      fontSize: 14, color: AppColors.textSecondary),
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
           ),
-          // Số tiền
+
+          // Khối hiển thị Số tiền
           Text(
-            isIncome ? '+ ${formatCurrency.format(transaction.amount)}' : formatCurrency.format(transaction.amount),
+            isIncome
+                ? '+ ${formatCurrency.format(amount)}'
+                : formatCurrency.format(amount),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
+              // Màu tiền: Xanh nếu thu nhập, Đen đậm nếu chi phí
               color: isIncome ? AppColors.income : AppColors.textPrimary,
             ),
           ),

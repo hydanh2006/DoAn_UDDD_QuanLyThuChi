@@ -1,42 +1,57 @@
 import 'package:flutter/material.dart';
 
+enum CategoryType { Food, Rent, Shopping, Salary, Entertainment, Other }
+
 class TransactionModel {
-  final String title;
-  final String time;
-  final double amount;
-  final IconData icon;
-  final Color iconBackgroundColor;
+  final String id;
+  String title;
+  double amount;
+  bool isIncome; // true = Thu nhập, false = Chi phí
+  CategoryType category;
+  DateTime date;
 
   TransactionModel({
+    required this.id,
     required this.title,
-    required this.time,
     required this.amount,
-    required this.icon,
-    required this.iconBackgroundColor,
+    required this.isIncome,
+    required this.category,
+    required this.date,
   });
-}
 
-// Dữ liệu mẫu (Mock data)
-List<TransactionModel> mockTransactions = [
-  TransactionModel(
-    title: 'Ăn uống',
-    time: 'Hôm nay, 12:30 PM',
-    amount: -50000,
-    icon: Icons.restaurant,
-    iconBackgroundColor: const Color(0xFFFF3B30).withOpacity(0.1),
-  ),
-  TransactionModel(
-    title: 'Mua sắm',
-    time: 'Hôm qua, 09:15 AM',
-    amount: -300000,
-    icon: Icons.shopping_bag,
-    iconBackgroundColor: const Color(0xFF5E5CE6).withOpacity(0.1),
-  ),
-  TransactionModel(
-    title: 'Lương',
-    time: '01/10/2026',
-    amount: 15000000,
-    icon: Icons.monetization_on,
-    iconBackgroundColor: const Color(0xFF34C759).withOpacity(0.1),
-  ),
-];
+  // Hàm lấy Icon
+  IconData get categoryIcon {
+    switch (category) {
+      case CategoryType.Food:
+        return Icons.fastfood;
+      case CategoryType.Rent:
+        return Icons.home;
+      case CategoryType.Shopping:
+        return Icons.shopping_bag;
+      case CategoryType.Salary:
+        return Icons.attach_money;
+      case CategoryType.Entertainment:
+        return Icons.movie;
+      default:
+        return Icons.category;
+    }
+  }
+
+  // Hàm lấy màu cho Icon
+  Color get categoryColor {
+    switch (category) {
+      case CategoryType.Food:
+        return Colors.orange;
+      case CategoryType.Rent:
+        return Colors.blue;
+      case CategoryType.Shopping:
+        return Colors.purple;
+      case CategoryType.Salary:
+        return Colors.green;
+      case CategoryType.Entertainment:
+        return Colors.redAccent;
+      default:
+        return Colors.grey;
+    }
+  }
+}
