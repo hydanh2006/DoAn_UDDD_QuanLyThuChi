@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import 'features/dashboard/presentation/pages/dashboard_page.dart';
 
+import 'package:doan_appqlthuchi/features/auth/presentation/pages/login_page.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -16,7 +18,7 @@ class MyApp extends StatelessWidget {
       title: 'Quản Lý Chi Tiêu',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'Inter', primarySwatch: Colors.blue),
-      home: const MainLayout(),
+      home: const LoginPage(),
     );
   }
 }

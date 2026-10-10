@@ -6,6 +6,9 @@ import 'dashboard_page.dart';
 import 'package:doan_appqlthuchi/features/dashboard/presentation/pages/transactions_page.dart';
 import 'package:doan_appqlthuchi/features/dashboard/presentation/pages/budget_page.dart';
 import 'package:doan_appqlthuchi/features/dashboard/presentation/pages/savings_page.dart';
+import 'package:doan_appqlthuchi/features/reminder/presentation/pages/reminder_page.dart';
+import 'package:doan_appqlthuchi/features/profile/presentation/pages/profile_page.dart';
+import 'package:doan_appqlthuchi/features/notifications/presentation/pages/notifications_page.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({Key? key}) : super(key: key);
@@ -25,13 +28,9 @@ class _MainLayoutState extends State<MainLayout> {
       },
     ),
     const SavingsPage(),
-    const Center(
-      child: Text('Màn hình Nhắc nhở', style: TextStyle(fontSize: 24)),
-    ),
-    const Center(
-      child: Text('Màn hình Thông báo', style: TextStyle(fontSize: 24)),
-    ),
-    const Center(child: Text('Màn hình Hồ sơ', style: TextStyle(fontSize: 24))),
+    const ReminderPage(),
+    const NotificationsPage(),
+    const ProfilePage(),
     const TransactionsPage(),
     const BudgetPage(),
   ];

@@ -13,13 +13,8 @@ class TransactionsPage extends StatefulWidget {
 }
 
 class _TransactionsPageState extends State<TransactionsPage> {
-  final TextEditingController _searchController = TextEditingController();
-
-  // Các bộ lọc
   String _searchQuery = '';
-  String _typeFilter = 'Tất cả';
-  String _timeFilter = 'Tất cả';
-  String _categoryFilter = 'Tất cả danh mục';
+  String _selectedFilter = 'Tất cả';
 
   // Hàm mở Dialog thêm giao dịch
   void _openAddTransactionDialog() async {
@@ -35,14 +30,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
     }
   }
 
-  // Hàm xóa giao dịch
-  void _deleteTransaction(String id) {
-    setState(() {
-      mockTransactions.removeWhere((tx) => tx.id == id);
-    });
-  }
-
-  // Hàm chỉnh sửa giao dịch
+  // Hàm mở Dialog chỉnh sửa giao dịch
   void _openEditTransactionDialog(TransactionModel transaction) async {
     final result = await showDialog<TransactionModel>(
       context: context,
@@ -52,7 +40,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
     if (result != null) {
       setState(() {
-        // Tìm vị trí giao dịch cũ trong danh sách và thay thế bằng giao dịch mới
         final index = mockTransactions.indexWhere((tx) => tx.id == result.id);
         if (index != -1) {
           mockTransactions[index] = result;
@@ -61,226 +48,94 @@ class _TransactionsPageState extends State<TransactionsPage> {
     }
   }
 
-  // Lọc danh sách giao dịch
-  List<TransactionModel> get _filteredTransactions {
-    return mockTransactions.where((tx) {
-      // Lọc theo từ khóa tìm kiếm
-      final matchesSearch = tx.title.toLowerCase().contains(
-        _searchQuery.toLowerCase(),
-      );
-
-      // Lọc theo loại (Thu nhập / Chi phí)
-      bool matchesType = true;
-      if (_typeFilter == 'Thu nhập') {
-        matchesType = tx.isIncome;
-      } else if (_typeFilter == 'Chi phí') {
-        matchesType = !tx.isIncome;
-      }
-
-      // Lọc theo thời gian đơn giản
-      bool matchesTime = true;
-      final now = DateTime.now();
-      if (_timeFilter == 'Hôm nay') {
-        matchesTime =
-            tx.date.year == now.year &&
-            tx.date.month == now.month &&
-            tx.date.day == now.day;
-      } else if (_timeFilter == 'Tuần này') {
-        // Kiểm tra trong vòng 7 ngày gần nhất
-        matchesTime = now.difference(tx.date).inDays <= 7;
-      } else if (_timeFilter == 'Tháng này') {
-        matchesTime = tx.date.year == now.year && tx.date.month == now.month;
-      }
-
-      return matchesSearch && matchesType && matchesTime;
-    }).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
     final formatCurrency = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
-    final transactions = _filteredTransactions;
+
+    // Lọc giao dịch theo tìm kiếm và bộ lọc (Tất cả / Thu nhập / Chi phí)
+    final filteredTransactions = mockTransactions.where((tx) {
+      final matchesSearch = tx.title.toLowerCase().contains(
+        _searchQuery.toLowerCase(),
+      );
+      if (_selectedFilter == 'Tất cả') return matchesSearch;
+      if (_selectedFilter == 'Thu nhập') return tx.isIncome && matchesSearch;
+      if (_selectedFilter == 'Chi phí') return !tx.isIncome && matchesSearch;
+      return matchesSearch;
+    }).toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(32.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header & Nút thêm giao dịch
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Giao dịch',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Giao dịch',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Xem, tìm kiếm và quản lý mọi khoản thu chi của bạn.',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: AppColors.textSecondary,
+                      SizedBox(height: 8),
+                      Text(
+                        'Xem, tìm kiếm và quản lý mọi khoản thu chi của bạn.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    ],
                   ),
-                  onPressed: _openAddTransactionDialog,
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Thêm giao dịch'),
                 ),
               ],
             ),
             const SizedBox(height: 24),
 
-            // Thanh tìm kiếm và các bộ lọc
+            // Ô tìm kiếm & Bộ lọc
             Container(
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12.0),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: Colors.grey.shade200),
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Ô tìm kiếm
                   TextField(
-                    controller: _searchController,
-                    onChanged: (value) => setState(() => _searchQuery = value),
+                    onChanged: (val) => setState(() => _searchQuery = val),
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.search, color: Colors.grey),
                       hintText: 'Tìm theo tên khoản...',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
+                        horizontal: 12,
                         vertical: 12,
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
 
-                  // Các nút lọc ngang
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildFilterChip(
-                          'Tất cả',
-                          _typeFilter == 'Tất cả',
-                          () => setState(() => _typeFilter = 'Tất cả'),
-                        ),
+                        _buildFilterChip('Tất cả'),
                         const SizedBox(width: 8),
-                        _buildFilterChip(
-                          'Thu nhập',
-                          _typeFilter == 'Thu nhập',
-                          () => setState(() => _typeFilter = 'Thu nhập'),
-                        ),
+                        _buildFilterChip('Thu nhập'),
                         const SizedBox(width: 8),
-                        _buildFilterChip(
-                          'Chi phí',
-                          _typeFilter == 'Chi phí',
-                          () => setState(() => _typeFilter = 'Chi phí'),
-                        ),
-
-                        const SizedBox(width: 16),
-                        Container(
-                          height: 24,
-                          width: 1,
-                          color: Colors.grey.shade300,
-                        ),
-                        const SizedBox(width: 16),
-
-                        _buildFilterChip(
-                          'Tất cả',
-                          _timeFilter == 'Tất cả',
-                          () => setState(() => _timeFilter = 'Tất cả'),
-                        ),
-                        const SizedBox(width: 8),
-                        _buildFilterChip(
-                          'Hôm nay',
-                          _timeFilter == 'Hôm nay',
-                          () => setState(() => _timeFilter = 'Hôm nay'),
-                        ),
-                        const SizedBox(width: 8),
-                        _buildFilterChip(
-                          'Tuần này',
-                          _timeFilter == 'Tuần này',
-                          () => setState(() => _timeFilter = 'Tuần này'),
-                        ),
-                        const SizedBox(width: 8),
-                        _buildFilterChip(
-                          'Tháng này',
-                          _timeFilter == 'Tháng này',
-                          () => setState(() => _timeFilter = 'Tháng này'),
-                        ),
-
-                        const SizedBox(width: 16),
-                        Container(
-                          height: 24,
-                          width: 1,
-                          color: Colors.grey.shade300,
-                        ),
-                        const SizedBox(width: 16),
-
-                        // Dropdown danh mục
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: DropdownButton<String>(
-                            value: _categoryFilter,
-                            underline: const SizedBox(),
-                            items:
-                                [
-                                      'Tất cả danh mục',
-                                      'Ăn uống',
-                                      'Tiền nhà',
-                                      'Mua sắm',
-                                      'Giải trí',
-                                    ]
-                                    .map(
-                                      (cat) => DropdownMenuItem(
-                                        value: cat,
-                                        child: Text(cat),
-                                      ),
-                                    )
-                                    .toList(),
-                            onChanged: (val) {
-                              if (val != null)
-                                setState(() => _categoryFilter = val);
-                            },
-                          ),
-                        ),
+                        _buildFilterChip('Chi phí'),
                       ],
                     ),
                   ),
@@ -289,53 +144,52 @@ class _TransactionsPageState extends State<TransactionsPage> {
             ),
             const SizedBox(height: 24),
 
-            // Danh sách hiển thị giao dịch
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12.0),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: Colors.grey.shade200),
               ),
-              child: transactions.isEmpty
+              child: filteredTransactions.isEmpty
                   ? const Padding(
-                      padding: EdgeInsets.all(32.0),
+                      padding: EdgeInsets.all(48.0),
                       child: Center(
                         child: Text(
-                          'Không có giao dịch nào phù hợp.',
-                          style: TextStyle(color: Colors.grey),
+                          'Không tìm thấy giao dịch nào.',
+                          style: TextStyle(color: Colors.grey, fontSize: 16),
                         ),
                       ),
                     )
                   : ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: transactions.length,
+                      itemCount: filteredTransactions.length,
                       separatorBuilder: (context, index) =>
-                          Divider(color: Colors.grey.shade200, height: 1),
+                          Divider(color: Colors.grey.shade100, height: 1),
                       itemBuilder: (context, index) {
-                        final tx = transactions[index];
-                        final formattedDate =
-                            "${DateFormat('dd/MM/yyyy').format(tx.date)} • Tiền mặt • ${tx.category.name}";
+                        final tx = filteredTransactions[index];
+                        final dateStr = DateFormat('dd/MM/yyyy')
+                            .format(tx.date);
 
                         return Padding(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
+                            horizontal: 16.0,
+                            vertical: 12.0,
                           ),
                           child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
+                              // Icon giao dịch
                               Container(
-                                width: 48,
-                                height: 48,
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: tx.categoryColor.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
+                                  color: tx.categoryColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Icon(
                                   tx.categoryIcon,
                                   color: tx.categoryColor,
+                                  size: 24,
                                 ),
                               ),
                               const SizedBox(width: 16),
@@ -350,10 +204,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.textPrimary,
                                       ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow
+                                          .ellipsis, // Cắt bớt nếu quá dài
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      formattedDate,
+                                      '$dateStr • Tiền mặt • ${_getCategoryName(tx.category)}',
                                       style: const TextStyle(
                                         fontSize: 13,
                                         color: AppColors.textSecondary,
@@ -362,36 +219,54 @@ class _TransactionsPageState extends State<TransactionsPage> {
                                   ],
                                 ),
                               ),
+                              const SizedBox(width: 12),
+
+                              // Số tiền & Loại (Thu/Chi)
                               Text(
-                                tx.isIncome
-                                    ? '+ ${formatCurrency.format(tx.amount)}'
-                                    : formatCurrency.format(tx.amount),
+                                '${tx.isIncome ? '+' : '-'} ${formatCurrency.format(tx.amount)}',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.bold,
                                   color: tx.isIncome
-                                      ? AppColors.income
-                                      : AppColors.expense,
+                                      ? Colors.green
+                                      : Colors.red,
                                 ),
                               ),
-                              const SizedBox(width: 24),
+                              const SizedBox(width: 8),
 
                               // Nút Sửa & Xóa
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.edit_outlined,
-                                  size: 20,
-                                  color: Colors.grey,
-                                ),
-                                onPressed: () => _openEditTransactionDialog(tx),
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.delete_outline,
-                                  size: 20,
-                                  color: Colors.redAccent,
-                                ),
-                                onPressed: () => _deleteTransaction(tx.id),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    icon: const Icon(
+                                      Icons.edit_outlined,
+                                      size: 20,
+                                      color: Colors.grey,
+                                    ),
+                                    onPressed: () =>
+                                        _openEditTransactionDialog(tx),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  IconButton(
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      size: 20,
+                                      color: Colors.redAccent,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        mockTransactions.removeWhere(
+                                          (item) => item.id == tx.id,
+                                        );
+                                      });
+                                    },
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -399,51 +274,49 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       },
                     ),
             ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                OutlinedButton(
-                  onPressed: null,
-                  child: const Text('Trang trước'),
-                ),
-                const Text(
-                  'Trang 1/1',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-                OutlinedButton(onPressed: null, child: const Text('Trang sau')),
-              ],
-            ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openAddTransactionDialog,
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
 
-  // Widget nút Chip lọc
-  Widget _buildFilterChip(String label, bool isSelected, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.transparent,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: isSelected ? AppColors.primary : AppColors.textSecondary,
-          ),
-        ),
+  String _getCategoryName(CategoryType type) {
+    switch (type) {
+      case CategoryType.Food:
+        return 'Ăn uống';
+      case CategoryType.Rent:
+        return 'Tiền nhà';
+      case CategoryType.Shopping:
+        return 'Mua sắm';
+      case CategoryType.Salary:
+        return 'Lương';
+      case CategoryType.Entertainment:
+        return 'Giải trí';
+      case CategoryType.Other:
+        return 'Khác';
+    }
+  }
+
+  Widget _buildFilterChip(String title) {
+    final isSelected = _selectedFilter == title;
+    return ChoiceChip(
+      label: Text(title),
+      selected: isSelected,
+      selectedColor: AppColors.primary.withOpacity(0.1),
+      labelStyle: TextStyle(
+        color: isSelected ? AppColors.primary : AppColors.textSecondary,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
       ),
+      onSelected: (selected) {
+        if (selected) {
+          setState(() => _selectedFilter = title);
+        }
+      },
     );
   }
 }
